@@ -178,6 +178,7 @@ export declare class DataEventArgs {
     query?: any;
     previous?: any;
     throwError?: boolean;
+    result?: any;
 }
 
 export declare interface BeforeSaveEventListener {
