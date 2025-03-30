@@ -36,12 +36,11 @@ export declare class EdmType {
     static IsCollection(type: string): boolean;
 }
 
-export declare class EdmMultiplicity {
-    static Many: string;
-    static One: string;
-    static Unknown: string;
-    static ZeroOrOne: string;
-    static parse(value: string): string;
+export declare enum EdmMultiplicity {
+    Many = 'Many',
+    One = 'One',
+    Unknown = 'Unknown',
+    ZeroOrOne = 'ZeroOrOne'
 }
 
 
