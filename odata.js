@@ -72,30 +72,24 @@ EdmType.IsCollection = function(type) {
     }
 };
 
-/**
- * @enum
- */
-function EdmMultiplicity() {
+class EdmMultiplicity {
 
-}
-EdmMultiplicity.Many = 'Many';
-EdmMultiplicity.One = 'One';
-EdmMultiplicity.Unknown = 'Unknown';
-EdmMultiplicity.ZeroOrOne = 'ZeroOrOne';
-/**
- * @param {string} value
- * @returns {string|*}
- */
-EdmMultiplicity.parse = function(value) {
-    if (typeof value === 'string') {
-        var re = new RegExp('^'+value+'$','ig');
-        return _.find(_.keys(EdmMultiplicity), function(x) {
-            if (typeof EdmMultiplicity[x] === 'string') {
-                return re.test(EdmMultiplicity[x]);
-            }
-        });
+    static Many = 'Many';
+    static One = 'One';
+    static Unknown = 'Unknown';
+    static ZeroOrOne = 'ZeroOrOne';
+
+    static parse(value) {
+        if (typeof value === 'string') {
+            return Object.keys(EdmMultiplicity).find((x) => {
+                if (typeof EdmMultiplicity[x] === 'string') {
+                    return re.test(EdmMultiplicity[x]);
+                }
+            });
+        }
     }
-};
+}
+
 
 /**
  * @enum
@@ -108,91 +102,71 @@ EntitySetKind.Singleton = 'Singleton';
 EntitySetKind.FunctionImport = 'FunctionImport';
 EntitySetKind.ActionImport = 'ActionImport';
 
-// noinspection JSUnusedGlobalSymbols
-/**
- * @class
- * @param {string} name
- * @constructor
- */
-function ProcedureConfiguration(name) {
-    this.name = name;
-    this.parameters = [];
-    // noinspection JSUnusedGlobalSymbols
-    this.isBound = false;
-    this.isComposable = false;
-}
-/**
- * @param type
- * @returns {ProcedureConfiguration}
- */
-ProcedureConfiguration.prototype.returns = function(type) {
-    // noinspection JSUnusedGlobalSymbols
-    this.returnType = type;
-    return this;
-};
-// noinspection JSUnusedGlobalSymbols
-/**
- * @param type
- * @returns {ProcedureConfiguration}
- */
-ProcedureConfiguration.prototype.returnsCollection = function(type) {
-    // noinspection JSUnusedGlobalSymbols
-    this.returnCollectionType =  type;
-    return this;
-};
-/**
- * @param {string} name
- * @param {string} type
- * @param {boolean=} nullable
- * @param {boolean=} fromBody
- */
-ProcedureConfiguration.prototype.parameter = function(name, type, nullable, fromBody) {
-    Args.notString(name, 'Action parameter name');
-    Args.notString(type, 'Action parameter type');
-    var findRe = new RegExp('^' + name + '$' ,'ig');
-    var p = _.find(this.parameters, function(x) {
-        return findRe.test(x.name);
-    });
-    if (p) {
-        p.type = type;
+class ProcedureConfiguration {
+    /**
+     * @param {string} name
+     * @constructor
+     */
+    constructor(name) {
+        this.name = name;
+        this.parameters = [];
+        this.isBound = false;
+        this.isComposable = false;
     }
-    else {
-        this.parameters.push({
-            'name':name,
-            'type':type,
-            'nullable': _.isBoolean(nullable) ? nullable : false,
-            'fromBody': fromBody
+
+    /**
+     * @param type
+     * @returns {ProcedureConfiguration}
+     */
+    returns(type) {
+        this.returnType = type;
+        return this;
+    }
+
+    /**
+     * @param type
+     * @returns {ProcedureConfiguration}
+     */
+    returnsCollection(type) {
+        this.returnCollectionType =  type;
+        return this;
+    }
+
+    /**
+     * @param {string} name
+     * @param {string} type
+     * @param {boolean=} nullable
+     * @param {boolean=} fromBody
+     */
+    parameter(name, type, nullable, fromBody) {
+        Args.notString(name, 'Action parameter name');
+        Args.notString(type, 'Action parameter type');
+        var findRe = new RegExp('^' + name + '$' ,'ig');
+        var p = _.find(this.parameters, function(x) {
+            return findRe.test(x.name);
         });
+        if (p) {
+            p.type = type;
+        }
+        else {
+            this.parameters.push({
+                'name':name,
+                'type':type,
+                'nullable': _.isBoolean(nullable) ? nullable : false,
+                'fromBody': fromBody
+            });
+        }
+        return this;
     }
-    return this;
-};
-
-/**
- * @class
- * @constructor
- * @param {string} name
- * @augments ProcedureConfiguration
- * @extends ProcedureConfiguration
- */
-function ActionConfiguration(name) {
-    ActionConfiguration.super_.bind(this)(name);
-    // noinspection JSUnusedGlobalSymbols
-    this.isBound = false;
 }
-LangUtils.inherits(ActionConfiguration, ProcedureConfiguration);
 
-/**
- * @class
- * @constructor
- * @param {string} name
- * @augments ProcedureConfiguration
- */
-function FunctionConfiguration(name) {
-    FunctionConfiguration.super_.bind(this)(name);
-    // noinspection JSUnusedGlobalSymbols
-    this.isBound = false;
+class ActionConfiguration extends ProcedureConfiguration {
+
 }
-LangUtils.inherits(FunctionConfiguration, ProcedureConfiguration);
+
+class FunctionConfiguration extends ProcedureConfiguration {
+
+}
 
 /**
  * @class
@@ -343,7 +317,7 @@ EntityTypeConfiguration.prototype.getBuilder = function() {
      * @returns EntityTypeConfiguration
      */
     EntityTypeConfiguration.prototype.derivesFrom = function(name) {
-        Args.notString(name,'Enity type name');
+        Args.notString(name,'Entity type name');
         this.baseType = name;
         return this;
     };
@@ -421,7 +395,7 @@ EntityTypeConfiguration.prototype.getBuilder = function() {
      * Adds a new EDM primitive property to this entity type.
      * @param {string} name
      * @param {string} type
-     * @param {boolean=} nullable,
+     * @param {boolean=} nullable
      * @returns EntityTypeConfiguration
      */
     EntityTypeConfiguration.prototype.addProperty = function(name, type, nullable) {
@@ -646,81 +620,82 @@ EntityTypeConfiguration.prototype.mapInstanceSet = function(context, any) {
 
 
 
-/**
- * @class
- * @param {ODataModelBuilder} builder
- * @param {string} entityType
- * @param {string} name
- */
-function EntitySetConfiguration(builder, entityType, name) {
-    Args.check(builder instanceof ODataModelBuilder, new TypeError('Invalid argument. Configuration builder must be an instance of ODataModelBuilder class'));
-    Args.notString(entityType, 'Entity Type');
-    Args.notString(name, 'EntitySet Name');
-    this[builderProperty] = builder;
-    this[entityTypeProperty] = entityType;
-    //ensure entity type
-    if (!this[builderProperty].hasEntity(this[entityTypeProperty])) {
-        this[builderProperty].addEntity(this[entityTypeProperty]);
-    }
-    this.name = name;
-    this.kind = EntitySetKind.EntitySet;
-    //use the given name as entity set URL by default
-    this.url = name;
+class EntitySetConfiguration {
+    /**
+     * @param {ODataModelBuilder} builder
+     * @param {string} entityType
+     * @param {string} name
+     */
+    constructor(builder, entityType, name) {
+        Args.check(builder instanceof ODataModelBuilder, new TypeError('Invalid argument. Configuration builder must be an instance of ODataModelBuilder class'));
+        Args.notString(entityType, 'Entity Type');
+        Args.notString(name, 'EntitySet Name');
+        this[builderProperty] = builder;
+        this[entityTypeProperty] = entityType;
+        //ensure entity type
+        if (!this[builderProperty].hasEntity(this[entityTypeProperty])) {
+            this[builderProperty].addEntity(this[entityTypeProperty]);
+        }
+        this.name = name;
+        this.kind = EntitySetKind.EntitySet;
+        //use the given name as entity set URL by default
+        this.url = name;
 
-    Object.defineProperty(this,'entityType', {
-        get: function() {
-            if (!this[builderProperty].hasEntity(this[entityTypeProperty])) {
-                return this[builderProperty].addEntity(this[entityTypeProperty]);
+        Object.defineProperty(this,'entityType', {
+            get: function() {
+                if (!this[builderProperty].hasEntity(this[entityTypeProperty])) {
+                    return this[builderProperty].addEntity(this[entityTypeProperty]);
+                }
+                return this[builderProperty].getEntity(this[entityTypeProperty]);
             }
-            return this[builderProperty].getEntity(this[entityTypeProperty]);
-        }
-    });
+        });
 
-    this.hasContextLink(
-        /**
-         * @this EntitySetConfiguration
-         * @param context
-         * @returns {string|*}
-         */
-        function(context) {
-        var thisBuilder = this.getBuilder();
-        if (_.isNil(thisBuilder)) {
-            return;
-        }
-        if (typeof thisBuilder.getContextLink !== 'function') {
-            return;
-        }
-        //get builder context link
-        var builderContextLink = thisBuilder.getContextLink(context);
-        if (builderContextLink) {
-            //add hash for entity set
-            return builderContextLink + '#' + this.name;
-        }
-    });
+        this.hasContextLink(
+            /**
+             * @this EntitySetConfiguration
+             * @param context
+             * @returns {string|*}
+             */
+            function(context) {
+            var thisBuilder = this.getBuilder();
+            if (_.isNil(thisBuilder)) {
+                return;
+            }
+            if (typeof thisBuilder.getContextLink !== 'function') {
+                return;
+            }
+            //get builder context link
+            var builderContextLink = thisBuilder.getContextLink(context);
+            if (builderContextLink) {
+                //add hash for entity set
+                return builderContextLink + '#' + this.name;
+            }
+        });
 
-}
+    }
+
 // noinspection JSUnusedGlobalSymbols
-EntitySetConfiguration.prototype.hasUrl = function(url) {
-        Args.notString(url, 'Entity Resource Path');
-        this.url = url;
-    };
+    hasUrl(url) {
+            Args.notString(url, 'Entity Resource Path');
+            this.url = url;
+        }
+
 // noinspection JSUnusedGlobalSymbols
-EntitySetConfiguration.prototype.getUrl = function() {
-        return this.url;
-    };
+    getUrl() {
+            return this.url;
+        }
 
     /**
      * @returns {ODataModelBuilder}
      */
-    EntitySetConfiguration.prototype.getBuilder = function() {
+    getBuilder() {
         return this[builderProperty];
-    };
+    }
 
-// noinspection JSUnusedGlobalSymbols
     /**
      * @returns {*}
      */
-    EntitySetConfiguration.prototype.getEntityTypePropertyList = function() {
+    getEntityTypePropertyList() {
         var result = {};
         _.forEach(this.entityType.property, function(x) {
             result[x.name] = x;
@@ -733,14 +708,14 @@ EntitySetConfiguration.prototype.getUrl = function() {
             baseEntityType = this.getBuilder().getEntity(baseEntityType.baseType);
         }
         return result;
-    };
-// noinspection JSUnusedGlobalSymbols
+    }
+
     /**
      * @param {string} name
      * @param  {boolean=} deep
      * @returns {*}
      */
-    EntitySetConfiguration.prototype.getEntityTypeProperty = function(name, deep) {
+    getEntityTypeProperty(name, deep) {
         var re = new RegExp('^' + name + '$','ig');
         var p = _.find(this.entityType.property, function(x) {
             return re.test(x.name);
@@ -761,12 +736,12 @@ EntitySetConfiguration.prototype.getUrl = function() {
                 baseEntityType = this.getBuilder().getEntity(baseEntityType.baseType);
             }
         }
-    };
-// noinspection JSUnusedGlobalSymbols
+    }
+
     /**
      * @returns {*}
      */
-    EntitySetConfiguration.prototype.getEntityTypeIgnoredPropertyList = function() {
+    getEntityTypeIgnoredPropertyList() {
         var result = [].concat(this.entityType.ignoredProperty);
         var baseEntityType = this.getBuilder().getEntity(this.entityType.baseType);
         while (baseEntityType) {
@@ -774,14 +749,14 @@ EntitySetConfiguration.prototype.getUrl = function() {
             baseEntityType = this.getBuilder().getEntity(baseEntityType.baseType);
         }
         return result;
-    };
-// noinspection JSUnusedGlobalSymbols
+    }
+
     /**
      * @param {string} name
      * @param  {boolean=} deep
      * @returns {*}
      */
-    EntitySetConfiguration.prototype.getEntityTypeNavigationProperty = function(name, deep) {
+    getEntityTypeNavigationProperty(name, deep) {
         var re = new RegExp('^' + name + '$','ig');
         var p = _.find(this.entityType.navigationProperty, function(x) {
             return re.test(x.name);
@@ -802,13 +777,12 @@ EntitySetConfiguration.prototype.getUrl = function() {
                 baseEntityType = this.getBuilder().getEntity(baseEntityType.baseType);
             }
         }
-    };
+    }
 
-// noinspection JSUnusedGlobalSymbols
     /**
      * @returns {*}
      */
-    EntitySetConfiguration.prototype.getEntityTypeNavigationPropertyList = function() {
+    getEntityTypeNavigationPropertyList() {
         var result = [];
         _.forEach(this.entityType.navigationProperty, function(x) {
             result[x.name] = x;
@@ -821,130 +795,125 @@ EntitySetConfiguration.prototype.getUrl = function() {
             baseEntityType = this.getBuilder().getEntity(baseEntityType.baseType);
         }
         return result;
-    };
+    }
 
-// noinspection JSUnusedGlobalSymbols
     /**
      * @param contextLinkFunc
      */
-    EntitySetConfiguration.prototype.hasContextLink = function(contextLinkFunc) {
+    hasContextLink(contextLinkFunc) {
 // noinspection JSUnusedGlobalSymbols
         this.getContextLink = contextLinkFunc;
-    };
+    }
 
-// noinspection JSUnusedGlobalSymbols
     /**
      *
      * @param {Function} idLinkFunc
      */
-    EntitySetConfiguration.prototype.hasIdLink = function(idLinkFunc) {
+    hasIdLink(idLinkFunc) {
 // noinspection JSUnusedGlobalSymbols
         this.getIdLink = idLinkFunc;
-    };
+    }
 
-// noinspection JSUnusedGlobalSymbols
     /**
      *
      * @param {Function} readLinkFunc
      */
-    EntitySetConfiguration.prototype.hasReadLink = function(readLinkFunc) {
+    hasReadLink(readLinkFunc) {
 // noinspection JSUnusedGlobalSymbols
         this.getReadLink = readLinkFunc;
-    };
+    }
 
-// noinspection JSUnusedGlobalSymbols
     /**
      *
      * @param {Function} editLinkFunc
      */
-    EntitySetConfiguration.prototype.hasEditLink = function(editLinkFunc) {
+    hasEditLink(editLinkFunc) {
 // noinspection JSUnusedGlobalSymbols
         this.getEditLink = editLinkFunc;
-    };
-// noinspection JSUnusedGlobalSymbols
-/**
- * @param {*} context
- * @param {*} any
- */
-EntitySetConfiguration.prototype.mapInstance = function(context, any) {
-    if (any == null) {
-        return;
     }
-    if (context) {
-        var contextLink = this.getContextLink(context);
-        if (contextLink) {
-            return _.assign({
-                '@odata.context':contextLink + '/$entity'
-            }, any);
+
+    /**
+     * @param {*} context
+     * @param {*} any
+     */
+    mapInstance(context, any) {
+        if (any == null) {
+            return;
         }
-    }
-    return any;
-};
-// noinspection JSUnusedGlobalSymbols
-/**
- * @param {*} context
- * @param {string} property
- * @param {*} any
- */
-EntitySetConfiguration.prototype.mapInstanceProperty = function(context, property, any) {
-    var builder = this.getBuilder();
-    if (context && typeof builder.getContextLink === 'function') {
-        var contextLink = builder.getContextLink(context);
-        if (contextLink) {
-            if (context.request && context.request.url) {
-                contextLink += '#';
-                contextLink += context.request.url.replace(builder.serviceRoot, '');
+        if (context) {
+            var contextLink = this.getContextLink(context);
+            if (contextLink) {
+                return _.assign({
+                    '@odata.context':contextLink + '/$entity'
+                }, any);
             }
-            return {
-                '@odata.context':contextLink,
-                'value': any
-            };
         }
+        return any;
     }
-    return {
-        'value': any
-    };
-};
 
-// noinspection JSUnusedGlobalSymbols
-/**
- *
- * @param {*} context
- * @param {*} any
- * @returns {*}
- */
-EntitySetConfiguration.prototype.mapInstanceSet = function(context, any) {
-    var result = {};
-    if (context) {
-        var contextLink = this.getContextLink(context);
-        if (contextLink) {
-            result['@odata.context'] = contextLink;
+    /**
+     * @param {*} context
+     * @param {string} property
+     * @param {*} any
+     */
+    mapInstanceProperty(context, property, any) {
+        var builder = this.getBuilder();
+        if (context && typeof builder.getContextLink === 'function') {
+            var contextLink = builder.getContextLink(context);
+            if (contextLink) {
+                if (context.request && context.request.url) {
+                    contextLink += '#';
+                    contextLink += context.request.url.replace(builder.serviceRoot, '');
+                }
+                return {
+                    '@odata.context':contextLink,
+                    'value': any
+                };
+            }
         }
+        return {
+            'value': any
+        };
     }
-    //search for total property for backward compatibility issues
-    if (hasOwnProperty(any, 'total') && /^\+?\d+$/.test(any['total'])) {
-        result['@odata.count'] = parseInt(any['total'], 10);
-    }
-    else if (hasOwnProperty(any, 'count') && /^\+?\d+$/.test(any['count'])) {
-        result['@odata.count'] = parseInt(any['count'], 10);
-    }
-    if (hasOwnProperty(any, 'skip') && /^\+?\d+$/.test(any['skip'])) {
-        result['@odata.skip'] = parseInt(any['skip'], 10);
-    }
-    result['value'] = [];
-    if (_.isArray(any)) {
-        result['value'] = any;
-    }
-    //search for records property for backward compatibility issues
-    else if (_.isArray(any.records)) {
-        result['value'] = any.records;
-    }
-    else if (_.isArray(any.value)) {
-        result['value'] = any.value;
-    }
-    return result;
-};
 
+    /**
+     *
+     * @param {*} context
+     * @param {*} any
+     * @returns {*}
+     */
+    mapInstanceSet(context, any) {
+        var result = {};
+        if (context) {
+            var contextLink = this.getContextLink(context);
+            if (contextLink) {
+                result['@odata.context'] = contextLink;
+            }
+        }
+        //search for total property for backward compatibility issues
+        if (hasOwnProperty(any, 'total') && /^\+?\d+$/.test(any['total'])) {
+            result['@odata.count'] = parseInt(any['total'], 10);
+        }
+        else if (hasOwnProperty(any, 'count') && /^\+?\d+$/.test(any['count'])) {
+            result['@odata.count'] = parseInt(any['count'], 10);
+        }
+        if (hasOwnProperty(any, 'skip') && /^\+?\d+$/.test(any['skip'])) {
+            result['@odata.skip'] = parseInt(any['skip'], 10);
+        }
+        result['value'] = [];
+        if (_.isArray(any)) {
+            result['value'] = any;
+        }
+        //search for records property for backward compatibility issues
+        else if (_.isArray(any.records)) {
+            result['value'] = any.records;
+        }
+        else if (_.isArray(any.value)) {
+            result['value'] = any.value;
+        }
+        return result;
+    }
+}
 
 /**
  * @class
@@ -1212,7 +1181,7 @@ function schemaToEdmDocument(schema) {
 /**
  * @classdesc Represents the OData model builder of an HTTP application
  * @property {string} serviceRoot - Gets or sets the service root URI
- * @param {ConfigurationBase} configuration
+ * @param {import('@themost/common').ConfigurationBase} configuration
  * @class
  */
 function ODataModelBuilder(configuration) {
@@ -1223,7 +1192,7 @@ function ODataModelBuilder(configuration) {
     this.defaultNamespace = null;
     this.defaultAlias = null;
     /**
-     * @returns {ConfigurationBase}
+     * @returns {import('@themost/common').ConfigurationBase}
      */
     this.getConfiguration = function() {
         return configuration;
@@ -1415,7 +1384,7 @@ ODataModelBuilder.prototype.removeEntitySet = function(name) {
      */
     ODataModelBuilder.prototype.getEdm = function() {
         var self = this;
-        return Q.promise(function(resolve, reject) {
+        return new Promise(function(resolve, reject) {
             try{
                 var schema = {
                     namespace: self.defaultNamespace,
@@ -1496,7 +1465,7 @@ ODataModelBuilder.prototype.getEdmSync = function() {
      */
     ODataModelBuilder.prototype.getEdmDocument = function() {
         var self = this;
-        return Q.promise(function(resolve, reject) {
+        return new Promise(function(resolve, reject) {
             try{
                 return self.getEdm().then(function(schema) {
                     var doc = schemaToEdmDocument.bind(self)(schema);
@@ -1631,14 +1600,14 @@ ODataModelBuilder.prototype.hasJsonFormatter = function(jsonFormatterFunc) {
  * @class
  * @returns {*}
  * @constructor
- * @param {ConfigurationBase} configuration
+ * @param {import('@themost/common').ConfigurationBase} configuration
  * @augments DataContext
  * @extends DataContext
  */
 function EntityDataContext(configuration) {
     EntityDataContext.super_.bind(this)();
     /**
-     * @returns {ConfigurationBase}
+     * @returns {import('@themost/common').ConfigurationBase}
      */
     this.getConfiguration = function() {
         return configuration;
@@ -1713,7 +1682,7 @@ LangUtils.inherits(ODataConventionModelBuilder, ODataModelBuilder);
                 var model = new DataModel(definition);
                 model.context = new EntityDataContext(self.getConfiguration());
                 var inheritedAttributes = [];
-                var primaryKey = _.find(model.attributes, function(x) {
+                var primaryKey = model.attributes.find(function(x) {
                     return x.primary;
                 });
                 if (model.inherits) {
@@ -1882,7 +1851,7 @@ ODataConventionModelBuilder.prototype.initialize = function() {
     if (self[initializeProperty]) {
         return Q.resolve();
     }
-    return Q.promise(function(resolve, reject) {
+    return new Promise(function(resolve, reject) {
         try {
             var schemaLoader = self.getConfiguration().getStrategy(SchemaLoaderStrategy);
             if (instanceOf(schemaLoader, DefaultSchemaLoaderStrategy)) {
@@ -1945,7 +1914,7 @@ ODataConventionModelBuilder.prototype._cleanupEntityContainer = function() {
     var entityTypes = self[entityTypesProperty];
     Object.keys(entityTypes).forEach(
         /**
-         * @param {EntityTypeConfiguration} entityType
+         * @param {string} name
          */
         function(name) {
             if (Object.prototype.hasOwnProperty.call(entityTypes, name)) {
