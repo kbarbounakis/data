@@ -5,7 +5,7 @@ var {sprintf} = require('sprintf-js');
 var Symbol = require('symbol');
 var pluralize = require('pluralize');
 var async = require('async');
-var {QueryUtils, MethodCallExpression} = require('@themost/query');
+var {QueryUtils, MethodCallExpression, ObjectNameValidator} = require('@themost/query');
 var {OpenDataParser} = require('@themost/query');
 var types = require('./types');
 var {DataAssociationMapping} = require('./types');
@@ -43,7 +43,7 @@ var { OnJsonAttribute } = require('./OnJsonAttribute');
 var { isObjectDeep } = require('./is-object');
 var { DataStateValidatorListener } = require('./data-state-validator');
 var resolver = require('./data-expand-resolver');
-var { isArrayLikeObject } = require('lodash/isArrayLikeObject');
+var isArrayLikeObject = require('lodash/isArrayLikeObject');
 /**
  * @this DataModel
  * @param {DataField} field
@@ -663,36 +663,23 @@ function unregisterContextListeners() {
             if (listener.type && !listener.disabled)
             {
                 /**
-                 * @type DataEventListener
+                 * @type {{beforeSave?:function,afterSave?:function,beforeRemove?:function,afterRemove?:function,beforeExecute?:function,afterExecute?:function,beforeUpgrade?:function,afterUpgrade?:function}}
                  */
-                var dataEventListener;
-                if (/^@themost\/data\//i.test(listener.type)) {
-                    dataEventListener = moduleLoader.require(listener.type);
-                    //dataEventListener = require(listener.type.replace(/^@themost\/data\//,'./'));
-                }
-                else {
-                    dataEventListener = moduleLoader.require(listener.type);
-                }
-
-                //if listener exports beforeSave function then register this as before.save event listener
+                var dataEventListener = moduleLoader.require(listener.type);
+                if (typeof dataEventListener.beforeUpgrade === 'function')
+                    this.on('before.upgrade', dataEventListener.beforeUpgrade);
                 if (typeof dataEventListener.beforeSave === 'function')
                     this.on('before.save', dataEventListener.beforeSave);
-                //if listener exports afterSave then register this as after.save event listener
                 if (typeof dataEventListener.afterSave === 'function')
                     this.on('after.save', dataEventListener.afterSave);
-                //if listener exports beforeRemove then register this as before.remove event listener
                 if (typeof dataEventListener.beforeRemove === 'function')
                     this.on('before.remove', dataEventListener.beforeRemove);
-                //if listener exports afterRemove then register this as after.remove event listener
                 if (typeof dataEventListener.afterRemove === 'function')
                     this.on('after.remove', dataEventListener.afterRemove);
-                //if listener exports beforeExecute then register this as before.execute event listener
                 if (typeof dataEventListener.beforeExecute === 'function')
                     this.on('before.execute', dataEventListener.beforeExecute);
-                //if listener exports afterExecute then register this as after.execute event listener
                 if (typeof dataEventListener.afterExecute === 'function')
                     this.on('after.execute', dataEventListener.afterExecute);
-                //if listener exports afterUpgrade then register this as after.upgrade event listener
                 if (typeof dataEventListener.afterUpgrade === 'function')
                     this.on('after.upgrade', dataEventListener.afterUpgrade);
             }
@@ -2450,12 +2437,28 @@ DataModel.prototype.migrate = function(callback)
     if (context===null)
         throw new Error('The underlying data context cannot be empty.');
 
+    // get source adapter name (without schema)
+    var qualifiedNameRegEx = new RegExp(ObjectNameValidator.validator.pattern, 'g');
+    var matches = migration.appliesTo.match(qualifiedNameRegEx);
+    Args.check(matches && matches.length, new DataError('ERR_INVALID_SOURCE', 'The database object of the given data model appears to be invalid based on the current validation rules.', null, self.name));
+    // Select the last match from the regex results because it represents the most specific or relevant part of the qualified name.
+    var [appliesTo] = matches.slice(-1);
+
     //get all related models
     var models = [];
     var db = context.db;
     var baseModel = self.base();
     if (baseModel!==null) {
         models.push(baseModel);
+    }
+    /**
+     * Formats index name
+     * @param {string} table
+     * @param {string} attribute
+     * @returns {string}
+     */
+    const formatIndexName = function(table, attribute) {
+        return 'INDEX_' + table.toUpperCase() + '_' + attribute.toUpperCase();
     }
     //validate associated models
     migration.add.forEach(function(x) {
@@ -2477,13 +2480,13 @@ DataModel.prototype.migrate = function(callback)
                 }
             }
             migration.indexes.push({
-                name: 'INDEX_' + migration.appliesTo.toUpperCase() + '_' + x.name.toUpperCase(),
+                name: formatIndexName(appliesTo, x.name),
                 columns: [ x.name ]
             });
         }
         else if (x.indexed === true) {
             migration.indexes.push({
-                name: 'INDEX_' + migration.appliesTo.toUpperCase() + '_' + x.name.toUpperCase(),
+                name: formatIndexName(appliesTo, x.name),
                 columns: [ x.name ]
             });
         }
