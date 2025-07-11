@@ -1,7 +1,9 @@
+// noinspection JSClosureCompilerSyntax
+
 const { DataError } = require('@themost/common');
 const { QueryField, SqlFormatter } = require('@themost/query');
 const cloneDeep = require('lodash/cloneDeep');
-const { DataAssociationMapping, DataObjectState } = require('./types');
+const { DataAssociationMapping } = require('./types');
 const { eachSeries } = require('async');
 const { DataPermissionEventListener } = require('./data-permission')
 
@@ -55,6 +57,7 @@ class OnBeforeExpandListener {
                return callback();
             }
             const formatter = event.model.context.db.getFormatter();
+            // noinspection JSUnresolvedReference
             if (typeof formatter.$jsonGroupArray !== 'function') {
                 // the formatter does not support json group array
                 // exit without do nothing
@@ -93,6 +96,9 @@ class OnBeforeExpandListener {
                             if (mapping) {
                                 if (typeof expr.options === 'object') {
                                     // clone mapping
+                                    /**
+                                     * @type {*|DataAssociationMapping}
+                                     */
                                     const cloned = cloneDeep(mapping); 
                                     // merge options
                                     return Object.assign(cloned.options, expr.options);

@@ -1,9 +1,8 @@
 import { TestApplication2 } from './TestApplication';
-import { DataContext } from 'types';
-import { executeInUnattendedModeAsync } from '../UnattendedMode';
+import {DataContext, DataEventArgs} from 'types';
+import {DataModel, executeInUnattendedModeAsync} from '@themost/data';
 import { OnBeforeExpandListener } from '../OnBeforeExpandListener';
-import { SqlFormatter } from '@themost/query';
-
+import {SyncSubscription} from '@themost/events';
 
 describe('OnBeforeExpandListener', () => {
     let app: TestApplication2;
@@ -19,7 +18,7 @@ describe('OnBeforeExpandListener', () => {
     })
     it('should use listener', async () => {
         await executeInUnattendedModeAsync(context, async () => {
-            const items = await context.model('Order').on('before.execute', (event, callback) => {
+            const items = await context.model('Order').on('before.execute', (event: DataEventArgs, callback: (err?: Error) => void) => {
                 //return callback();
                 return new OnBeforeExpandListener().beforeExecute(event, callback);
             }).where((x: any) => {

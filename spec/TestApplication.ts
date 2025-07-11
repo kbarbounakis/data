@@ -94,7 +94,8 @@ export class TestApplication2 extends TestApplication {
             invariantName: 'test',
             default: true,
             options: {
-                database: resolve(__dirname, 'test2/db/test.db')
+                database: resolve(__dirname, 'test2/db/test.db'),
+                logLevel: 'debug'
             }
         });
     }
