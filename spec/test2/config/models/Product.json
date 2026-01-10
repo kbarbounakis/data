@@ -5,7 +5,7 @@
   "hidden": false,
   "sealed": false,
   "abstract": false,
-  "version": "2.2.2",
+  "version": "2.3.0",
   "inherits": "Thing",
   "caching": "conditional",
   "fields": [
@@ -237,6 +237,14 @@
       "name": "extraAttributes",
       "many": false,
       "type": "Json"
+    },
+    {
+      "name": "articles",
+      "many": false,
+      "type": "Json",
+      "indexed": true,
+      "additionalType": "Article",
+      "@json.multiplicity": "ZeroToMany"
     }
   ],
   "constraints": [

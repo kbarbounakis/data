@@ -82,6 +82,7 @@ EdmMultiplicity.Many = 'Many';
 EdmMultiplicity.One = 'One';
 EdmMultiplicity.Unknown = 'Unknown';
 EdmMultiplicity.ZeroOrOne = 'ZeroOrOne';
+EdmMultiplicity.ZeroOrMany = 'ZeroOrMany';
 /**
  * @param {string} value
  * @returns {string|*}

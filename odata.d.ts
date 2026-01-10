@@ -1,6 +1,7 @@
 // MOST Web Framework 2.0 Codename Blueshift BSD-3-Clause license Copyright (c) 2017-2022, THEMOST LP All rights reserved
 import {DataContext} from "./types";
 import {ConfigurationBase} from "@themost/common";
+import { DataModel } from './data-model';
 
 export declare interface SystemQueryOptions {
     $filter?: string;
@@ -10,7 +11,7 @@ export declare interface SystemQueryOptions {
     $skip?: number;
     $orderby?: string;
     $groupby?: string;
-    $inlinecount?:any;
+    $inlinecount?: any;
     $count?: any;
 }
 
@@ -33,7 +34,9 @@ export declare class EdmType {
     static EdmString: string;
     static EdmTimeOfDay: string;
     static EdmUntyped: string;
+
     static CollectionOf(type: string): string;
+
     static IsCollection(type: string): boolean;
 }
 
@@ -42,6 +45,8 @@ export declare class EdmMultiplicity {
     static One: string;
     static Unknown: string;
     static ZeroOrOne: string;
+    static ZeroToMany: string;
+
     static parse(value: string): string;
 }
 
@@ -55,15 +60,25 @@ export declare class EntitySetKind {
 
 export class EdmMapping {
     static entityType(name: string): Function;
+
     static action(name: string, returnType: any): Function;
+
     static func(name: string, returnType: any): Function;
+
     static param(name: string, type: string, nullable?: boolean, fromBody?: boolean): Function;
+
     static navigationProperty(name: string, type: string, multiplicity: string): Function;
+
     static property(name: string, type: string, nullable?: boolean): Function;
+
     static hasOwnAction(obj: any, name: string): Function;
+
     static hasOwnNavigationProperty(obj: any, name: string): any;
+
     static hasOwnFunction(obj: any, name: string): Function;
+
     static getOwnFunctions(obj: any): Array<Function>;
+
     static getOwnActions(obj: any): Array<Function>;
 }
 
@@ -100,32 +115,38 @@ export declare interface SchemaConfiguration {
 
 export declare class ProcedureConfiguration {
     name: string;
-    parameters:Array<ProcedureParameter>;
+    parameters: Array<ProcedureParameter>;
     isBound?: boolean;
     isComposable?: boolean;
 }
 
-export declare class ActionConfiguration extends ProcedureConfiguration{
+export declare class ActionConfiguration extends ProcedureConfiguration {
 
 }
 
-export declare class FunctionConfiguration extends ProcedureConfiguration{
+export declare class FunctionConfiguration extends ProcedureConfiguration {
 
 }
 
 export declare class EntityCollectionConfiguration {
     actions: Array<ActionConfiguration>;
     functions: Array<FunctionConfiguration>;
+
     addAction(name: string): ActionConfiguration;
+
     hasAction(name: string): ActionConfiguration;
+
     addFunction(name: string): FunctionConfiguration;
+
     hasFunction(name: string): FunctionConfiguration;
 
 }
 
 export declare class EntityTypeConfiguration {
     constructor(builder: any, name: string);
+
     getBuilder(): any;
+
     readonly name: string;
     property: Array<EntityTypeProperty>;
     ignoredProperty: Array<any>;
@@ -133,47 +154,77 @@ export declare class EntityTypeConfiguration {
     actions: Array<ActionConfiguration>;
     functions: Array<FunctionConfiguration>;
     collection: any;
+
     ignore(name: string): EntityTypeConfiguration;
+
     derivesFrom(name: string): EntityTypeConfiguration;
+
     addAction(name: string): ActionConfiguration;
+
     hasAction(name: string): ActionConfiguration;
+
     addFunction(name: string): FunctionConfiguration;
+
     hasFunction(name: string): FunctionConfiguration;
-    addProperty (name: string, type: string, nullable?: boolean): EntityTypeConfiguration;
+
+    addProperty(name: string, type: string, nullable?: boolean): EntityTypeConfiguration;
+
     removeProperty(name: string): EntityTypeConfiguration;
+
     addNavigationProperty(name: string, type: string, multiplicity: string): EntityTypeConfiguration;
+
     removeNavigationProperty(name: string): EntityTypeConfiguration;
+
     hasKey(name: string, type: string): EntityTypeConfiguration;
+
     removeKey(name: string): EntityTypeConfiguration;
+
     mapInstance(context: DataContext, any: any): any;
+
     mapInstanceSet(context: DataContext, any: any): any;
 
 }
 
 export declare class EntitySetConfiguration {
     constructor(builder: any, entityType: string, name: string);
+
     name: string;
     kind: string;
     url: string;
     readonly entityType: EntityTypeConfiguration;
+
     hasUrl(url: string): void;
+
     getUrl(): string;
+
     getBuilder(): any;
+
     getEntityTypePropertyList(): Map<string, EntityTypeProperty>;
+
     getEntityTypeProperty(name: boolean, deep?: boolean): EntityTypeProperty;
-    getEntityTypeIgnoredPropertyList():Array<string>;
+
+    getEntityTypeIgnoredPropertyList(): Array<string>;
+
     getEntityTypeNavigationProperty(name: string, deep?: boolean): EntityTypeNavigationProperty;
+
     getEntityTypeNavigationPropertyList(): Map<string, EntityTypeNavigationProperty>;
+
     hasContextLink(contextLinkFunc: (context: DataContext) => string): void;
+
     hasIdLink(idLinkFunc: (context: DataContext) => string): void;
+
     hasReadLink(readLinkFunc: (context: DataContext) => string): void;
+
     hasEditLink(editLinkFunc: (context: DataContext) => string): void;
+
     mapInstance(context: DataContext, any: any): any;
+
     mapInstanceSet(context: DataContext, any: any): any;
+
     mapInstanceProperty(context: DataContext, any: any): any;
 }
 
-export declare class SingletonConfiguration extends EntitySetConfiguration{
+export declare class SingletonConfiguration extends EntitySetConfiguration {
     constructor(builder: any, entityType: string, name: string);
 }
 
@@ -184,30 +235,50 @@ export declare interface ModelBuilderJsonFormatterOptions {
 
 export declare class ODataModelBuilder {
     constructor(configuration: ConfigurationBase);
+
     serviceRoot: string;
     defaultNamespace: string;
     defaultAlias: string;
+
     getEntity(name: string): EntityTypeConfiguration;
+
     addEntity(name: string): EntityTypeConfiguration;
+
     addSingleton(entityType: string, name: string): SingletonConfiguration;
+
     getSingleton(name: string): SingletonConfiguration;
+
     hasSingleton(name: string): boolean;
+
     hasEntitySet(name: string): boolean;
+
     addEntitySet(entityType: string, name: string): EntitySetConfiguration;
+
     removeEntitySet(name: string): boolean;
+
     getEntitySet(name: string): EntitySetConfiguration;
+
     getEntityTypeEntitySet(entityName: string): EntitySetConfiguration;
+
     ignore(name: string): ODataModelBuilder;
+
     hasEntity(name: string): boolean;
+
     getEdm(): Promise<SchemaConfiguration>;
+
     clean(all?: boolean): ODataModelBuilder;
+
     getEdmDocument(): Promise<any>;
+
     hasContextLink(contextLinkFunc: (context: DataContext) => string): void;
-    hasJsonFormatter(jsonFormatterFunc: (context: DataContext, entitySet: EntitySetConfiguration, instance: any, options?: ModelBuilderJsonFormatterOptions)=> any): void;
+
+    hasJsonFormatter(jsonFormatterFunc: (context: DataContext, entitySet: EntitySetConfiguration, instance: any, options?: ModelBuilderJsonFormatterOptions) => any): void;
 }
 
 export declare class EntityDataContext extends DataContext {
-
+    model(name: any): DataModel;
+    getConfiguration(): ConfigurationBase;
+    finalize(callback?: (err?: Error) => void): void;
 }
 
 export declare class ODataConventionModelBuilder extends ODataModelBuilder{
