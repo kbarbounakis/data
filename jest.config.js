@@ -55,7 +55,7 @@ module.exports = {
   // forceCoverageMatch: [],
 
   // A path to a module which exports an async function that is triggered once before all test suites
-  // globalSetup: undefined,
+  globalSetup: '<rootDir>/jest.build.js',
 
   // A path to a module which exports an async function that is triggered once after all test suites
   // globalTeardown: undefined,
@@ -82,7 +82,7 @@ module.exports = {
   // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
   moduleNameMapper: {
     '^@themost/data$': [
-      '<rootDir>/index'
+      '<rootDir>/dist'
     ]
   },
   // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader

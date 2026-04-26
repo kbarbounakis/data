@@ -28,10 +28,14 @@ module.exports = [
             }
         ],
         external,
-        plugins: [nodeResolve(), json(), commonjs({
+        plugins: [nodeResolve(), json({
+            preferConst: true,
+            compact: true
+        }), commonjs({
             esmExternals: true,
             strictRequires: true,
-            requireNodeBuiltins: true
+            requireNodeBuiltins: true,
+            ignoreDynamicRequires: true
         })],
     },
     {
